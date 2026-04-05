@@ -39,7 +39,7 @@ function Cart() {
         // Lade-Popup anzeigen, während Email sendet
         const toastId = toast.loading('Bestellung wird in den Ofen geschoben... 👩‍🍳', { style: bakeryStyle });
 
-        emailjs.send('service_wmosyyf', 'template_4zk2a4e', templateParams, 'tbB-z1UYnAe9jYhJU')
+        emailjs.send('service_wmosyyf', 'template_bkd9aod', templateParams, 'tbB-z1UYnAe9jYhJU')
             .then(() => {
                 // Wenn erfolgreich, Lade-Popup mit Erfolg ersetzen
                 toast.success('Bestellung erfolgreich! Wir melden uns per WhatsApp. 🎉', {

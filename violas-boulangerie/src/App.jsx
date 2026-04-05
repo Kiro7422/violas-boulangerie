@@ -1,8 +1,9 @@
 import { useState, useEffect, createContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { Toaster, toast } from 'react-hot-toast'; // NEU
+import { Toaster, toast } from 'react-hot-toast';
 import Navbar from './components/Navbar';
 import LoadingScreen from './components/LoadingScreen';
+import IntroScreen from './components/IntroScreen'; // NEU IMPORTIERT
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
@@ -22,17 +23,20 @@ function BackButton() {
 }
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true); // Steuert den schwarzen Startbildschirm
   const [isLoading, setIsLoading] = useState(true);
   const [cart, setCart] = useState([]);
 
+  // Der Timer startet JETZT erst, wenn showIntro auf 'false' gesetzt wurde (Knopf gedrückt)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 10000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!showIntro) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [showIntro]);
 
-  // Das Bäcker-Design für unsere Popups
   const toastStyle = {
     style: {
       border: '1px solid #8b5a2b',
@@ -57,8 +61,6 @@ function App() {
       }
       return [...prevCart, { ...product, quantity: 1 }];
     });
-
-    // NEU: Die schöne Nachricht anstelle von alert()
     toast.success(`${product.name} ist im Körbchen! 🥖`, toastStyle);
   };
 
@@ -74,15 +76,9 @@ function App() {
 
   const removeFromCart = (productId) => {
     setCart(prev => prev.filter(item => item.id !== productId));
-    // Optional: Auch hier ein Toast, wenn was gelöscht wird
     toast('Aus dem Korb genommen. 🗑️', {
       icon: '🥐',
-      style: {
-        border: '1px solid #ccc',
-        padding: '16px',
-        color: '#555',
-        backgroundColor: '#fff',
-      },
+      style: { border: '1px solid #ccc', padding: '16px', color: '#555', backgroundColor: '#fff' },
     });
   };
 
@@ -91,10 +87,12 @@ function App() {
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}>
       <Router>
-        {/* NEU: Der Toaster wird hier platziert, damit Popups überall funktionieren */}
         <Toaster position="bottom-center" reverseOrder={false} />
 
-        {isLoading ? (
+        {/* LOGIK: Erst Intro, dann Loading, dann Website */}
+        {showIntro ? (
+          <IntroScreen onStart={() => setShowIntro(false)} />
+        ) : isLoading ? (
           <LoadingScreen />
         ) : (
           <div className="app-container">
