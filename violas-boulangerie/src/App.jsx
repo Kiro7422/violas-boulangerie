@@ -1,121 +1,119 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect, createContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { Toaster, toast } from 'react-hot-toast'; // NEU
+import Navbar from './components/Navbar';
+import LoadingScreen from './components/LoadingScreen';
+import Home from './pages/Home';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Contact from './pages/Contact';
+import './App.css';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+export const CartContext = createContext();
 
+function BackButton() {
+  const navigate = useNavigate();
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    <button onClick={() => navigate(-1)} className="universal-back-btn">
+      ⬅ Zurück
+    </button>
+  );
 }
 
-export default App
+function App() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [cart, setCart] = useState([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Das Bäcker-Design für unsere Popups
+  const toastStyle = {
+    style: {
+      border: '1px solid #8b5a2b',
+      padding: '16px',
+      color: '#8b5a2b',
+      backgroundColor: '#fff8f0',
+      fontWeight: 'bold',
+    },
+    iconTheme: {
+      primary: '#8b5a2b',
+      secondary: '#fff8f0',
+    },
+  };
+
+  const addToCart = (product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find(item => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+
+    // NEU: Die schöne Nachricht anstelle von alert()
+    toast.success(`${product.name} ist im Körbchen! 🥖`, toastStyle);
+  };
+
+  const updateQuantity = (productId, delta) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === productId) {
+        const newQty = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId));
+    // Optional: Auch hier ein Toast, wenn was gelöscht wird
+    toast('Aus dem Korb genommen. 🗑️', {
+      icon: '🥐',
+      style: {
+        border: '1px solid #ccc',
+        padding: '16px',
+        color: '#555',
+        backgroundColor: '#fff',
+      },
+    });
+  };
+
+  const clearCart = () => setCart([]);
+
+  return (
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}>
+      <Router>
+        {/* NEU: Der Toaster wird hier platziert, damit Popups überall funktionieren */}
+        <Toaster position="bottom-center" reverseOrder={false} />
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : (
+          <div className="app-container">
+            <div className="bakery-background"></div>
+            <Navbar />
+            <BackButton />
+            <div className="main-content">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/contact" element={<Contact />} />
+              </Routes>
+            </div>
+          </div>
+        )}
+      </Router>
+    </CartContext.Provider>
+  );
+}
+
+export default App;
