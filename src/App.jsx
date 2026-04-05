@@ -1,9 +1,8 @@
 import { useState, useEffect, createContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster, toast } from 'react-hot-toast';
 import Navbar from './components/Navbar';
 import LoadingScreen from './components/LoadingScreen';
-import IntroScreen from './components/IntroScreen'; // NEU IMPORTIERT
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
@@ -13,8 +12,13 @@ import './index.css';
 
 export const CartContext = createContext();
 
+// Der Back-Button wird nur angezeigt, wenn wir nicht auf der Startseite sind
 function BackButton() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (location.pathname === "/") return null;
+
   return (
     <button onClick={() => navigate(-1)} className="universal-back-btn">
       ⬅ Zurück
@@ -23,19 +27,16 @@ function BackButton() {
 }
 
 function App() {
-  const [showIntro, setShowIntro] = useState(true); // Steuert den schwarzen Startbildschirm
   const [isLoading, setIsLoading] = useState(true);
   const [cart, setCart] = useState([]);
 
-  // Der Timer startet JETZT erst, wenn showIntro auf 'false' gesetzt wurde (Knopf gedrückt)
+  // Der Lade-Timer startet sofort beim Öffnen der Seite
   useEffect(() => {
-    if (!showIntro) {
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [showIntro]);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000); // 3 Sekunden Ladezeit (kannst du auf 2000 oder 5000 ändern)
+    return () => clearTimeout(timer);
+  }, []);
 
   const toastStyle = {
     style: {
@@ -89,10 +90,7 @@ function App() {
       <Router>
         <Toaster position="bottom-center" reverseOrder={false} />
 
-        {/* LOGIK: Erst Intro, dann Loading, dann Website */}
-        {showIntro ? (
-          <IntroScreen onStart={() => setShowIntro(false)} />
-        ) : isLoading ? (
+        {isLoading ? (
           <LoadingScreen />
         ) : (
           <div className="app-container">
